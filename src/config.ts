@@ -1,9 +1,9 @@
-import fs from 'fs'
-import path from 'path'
+import type { Agent } from 'package-manager-detector'
+import fs from 'node:fs'
+import path from 'node:path'
+import process from 'node:process'
 import ini from 'ini'
-import { findUp } from 'find-up'
-import type { Agent } from './agents'
-import { LOCKS } from './agents'
+import { detect } from './detect'
 
 const customRcPath = process.env.NI_CONFIG_FILE
 
@@ -29,24 +29,31 @@ let config: Config | undefined
 
 export async function getConfig(): Promise<Config> {
   if (!config) {
-    const result = await findUp('package.json') || ''
-    let packageManager = ''
-    if (result)
-      packageManager = JSON.parse(fs.readFileSync(result, 'utf8')).packageManager ?? ''
-    const [, agent, version] = packageManager.match(new RegExp(`^(${Object.values(LOCKS).join('|')})@(\d).*?$`)) || []
+    config = Object.assign(
+      {},
+      defaultConfig,
+      fs.existsSync(rcPath)
+        ? ini.parse(fs.readFileSync(rcPath, 'utf-8'))
+        : null,
+    )
+
+    if (process.env.NI_DEFAULT_AGENT)
+      config.defaultAgent = process.env.NI_DEFAULT_AGENT as Agent
+
+    if (process.env.NI_GLOBAL_AGENT)
+      config.globalAgent = process.env.NI_GLOBAL_AGENT as Agent
+
+    const agent = await detect({ programmatic: true })
     if (agent)
-      config = Object.assign({}, defaultConfig, { defaultAgent: (agent === 'yarn' && parseInt(version) > 1) ? 'yarn@berry' : agent })
-    else if (!fs.existsSync(rcPath))
-      config = defaultConfig
-    else
-      config = Object.assign({}, defaultConfig, ini.parse(fs.readFileSync(rcPath, 'utf-8')))
+      config.defaultAgent = agent
   }
+
   return config
 }
 
-export async function getDefaultAgent() {
+export async function getDefaultAgent(programmatic?: boolean) {
   const { defaultAgent } = await getConfig()
-  if (defaultAgent === 'prompt' && process.env.CI)
+  if (defaultAgent === 'prompt' && (programmatic || process.env.CI))
     return 'npm'
   return defaultAgent
 }

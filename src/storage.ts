@@ -1,5 +1,6 @@
-import { existsSync, promises as fs } from 'fs'
-import { join } from 'path'
+import { existsSync, promises as fs } from 'node:fs'
+import { resolve } from 'node:path'
+import { CLI_TEMP_DIR, writeFileSafe } from './utils'
 
 export interface Storage {
   lastRunCommand?: string
@@ -7,12 +8,12 @@ export interface Storage {
 
 let storage: Storage | undefined
 
-const storagePath = join(__dirname, '_storage.json')
+const storagePath = resolve(CLI_TEMP_DIR, '_storage.json')
 
 export async function load(fn?: (storage: Storage) => Promise<boolean> | boolean) {
   if (!storage) {
     storage = existsSync(storagePath)
-      ? JSON.parse(await fs.readFile(storagePath, 'utf-8')) || {}
+      ? (JSON.parse(await fs.readFile(storagePath, 'utf-8') || '{}') || {})
       : {}
   }
 
@@ -26,5 +27,5 @@ export async function load(fn?: (storage: Storage) => Promise<boolean> | boolean
 
 export async function dump() {
   if (storage)
-    await fs.writeFile(storagePath, JSON.stringify(storage), 'utf-8')
+    await writeFileSafe(storagePath, JSON.stringify(storage))
 }
