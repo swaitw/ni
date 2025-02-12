@@ -6,17 +6,13 @@
 
 <br>
 
-<pre>
-npm i -g <b>@antfu/ni</b>
+```
+npm i -g @antfu/ni
+```
 
-<b>ni</b>
-</pre>
-
-<a href='https://docs.npmjs.com/cli/v6/commands/npm'>npm</a> · <a href='https://yarnpkg.com'>yarn</a> · <a href='https://pnpm.js.org/en/'>pnpm</a>
-
+<a href='https://docs.npmjs.com/cli/v6/commands/npm'>npm</a> · <a href='https://yarnpkg.com'>yarn</a> · <a href='https://pnpm.io/'>pnpm</a> · <a href='https://bun.sh/'>bun</a>
 
 <br>
-
 
 ### `ni` - install
 
@@ -26,14 +22,16 @@ ni
 # npm install
 # yarn install
 # pnpm install
+# bun install
 ```
 
 ```bash
-ni axios
+ni vite
 
-# npm i axios
-# yarn add axios
-# pnpm add axios
+# npm i vite
+# yarn add vite
+# pnpm add vite
+# bun add vite
 ```
 
 ```bash
@@ -42,24 +40,44 @@ ni @types/node -D
 # npm i @types/node -D
 # yarn add @types/node -D
 # pnpm add -D @types/node
+# bun add -d @types/node
+```
+
+```bash
+ni -P
+
+# npm i --omit=dev
+# yarn install --production
+# pnpm i --production
+# bun install --production
 ```
 
 ```bash
 ni --frozen
 
 # npm ci
-# yarn install --frozen-lockfile
+# yarn install --frozen-lockfile (Yarn 1)
+# yarn install --immutable (Yarn Berry)
 # pnpm install --frozen-lockfile
+# bun install --frozen-lockfile
 ```
 
 ```bash
-ni -g iroiro
+ni -g eslint
 
-# npm i -g iroiro
-# yarn global add iroiro
-# pnpm add -g iroiro
+# npm i -g eslint
+# yarn global add eslint (Yarn 1)
+# pnpm add -g eslint
+# bun add -g eslint
 
 # this uses default agent, regardless your current working directory
+```
+
+```bash
+ni -i
+
+# interactively select the dependency to install
+# search for packages by name
 ```
 
 <br>
@@ -71,7 +89,8 @@ nr dev --port=3000
 
 # npm run dev -- --port=3000
 # yarn run dev --port=3000
-# pnpm run dev -- --port=3000
+# pnpm run dev --port=3000
+# bun run dev --port=3000
 ```
 
 ```bash
@@ -87,16 +106,23 @@ nr -
 # rerun the last command
 ```
 
+```bash
+nr --completion >> ~/.bashrc
+
+# add completion script to your shell (only bash supported for now)
+```
+
 <br>
 
-### `nx` - execute
+### `nlx` - download & execute
 
 ```bash
-nx jest
+nlx vitest
 
-# npx jest
-# yarn dlx jest
-# pnpm dlx jest
+# npx vitest
+# yarn dlx vitest
+# pnpm dlx vitest
+# bunx vitest
 ```
 
 <br>
@@ -107,15 +133,18 @@ nx jest
 nu
 
 # npm upgrade
-# yarn upgrade
+# yarn upgrade (Yarn 1)
+# yarn up (Yarn Berry)
 # pnpm update
+# bun update
 ```
 
 ```bash
 nu -i
 
-# (not available for npm)
-# yarn upgrade-interactive
+# (not available for npm & bun)
+# yarn upgrade-interactive (Yarn 1)
+# yarn up -i (Yarn Berry)
 # pnpm update -i
 ```
 
@@ -124,27 +153,35 @@ nu -i
 ### `nun` - uninstall
 
 ```bash
-nun axios
+nun webpack
 
-# npm uninstall axios
-# yarn remove axios
-# pnpm remove axios
+# npm uninstall webpack
+# yarn remove webpack
+# pnpm remove webpack
+# bun remove webpack
 ```
 
 ```bash
-nun @types/node -D
+nun
 
-# npm uninstall @types/node -D
-# yarn remove @types/node -D
-# pnpm remove -D @types/node
+# interactively select
+# the dependency to remove
 ```
 
 ```bash
-nun -g eslint
+nun -m
 
-# npm uninstall -g eslint
-# yarn global remove eslint
-# pnpm remove -g eslint
+# interactive select,
+# but with multiple dependencies
+```
+
+```bash
+nun -g silent
+
+# npm uninstall -g silent
+# yarn global remove silent
+# pnpm remove -g silent
+# bun remove -g silent
 ```
 
 <br>
@@ -157,17 +194,50 @@ nci
 # npm ci
 # yarn install --frozen-lockfile
 # pnpm install --frozen-lockfile
+# bun install --frozen-lockfile
 ```
 
 if the corresponding node manager is not present, this command will install it globally along the way.
 
 <br>
 
-### Change Directory
+### `na` - agent alias
 
 ```bash
+na
+
+# npm
+# yarn
+# pnpm
+# bun
+```
+
+```bash
+na run foo
+
+# npm run foo
+# yarn run foo
+# pnpm run foo
+# bun run foo
+```
+
+<br>
+
+### Global Flags
+
+```bash
+# ?               | Print the command execution depends on the agent
+ni vite ?
+
+# -C              | Change directory before running the command
 ni -C packages/foo vite
 nr -C playground dev
+
+# -v, --version   | Show version number
+ni -v
+
+# -h, --help      | Show help
+ni -h
 ```
 
 <br>
@@ -189,12 +259,80 @@ globalAgent=npm
 
 # custom configuration file path
 export NI_CONFIG_FILE="$HOME/.config/ni/nirc"
+
+# environment variables have higher priority than config file if presented
+export NI_DEFAULT_AGENT="npm" # default "prompt"
+export NI_GLOBAL_AGENT="npm"
+```
+
+```ps
+# for Windows
+
+# custom configuration file path in PowerShell accessible within the `$profile` path
+$Env:NI_CONFIG_FILE = 'C:\to\your\config\location'
 ```
 
 <br>
 
+### Integrations
+
+#### asdf
+
+You can also install ni via the [3rd-party asdf-plugin](https://github.com/CanRau/asdf-ni.git) maintained by [CanRau](https://github.com/CanRau)
+
+```bash
+# first add the plugin
+asdf plugin add ni https://github.com/CanRau/asdf-ni.git
+
+# then install the latest version
+asdf install ni latest
+
+# and make it globally available
+asdf global ni latest
+```
+
 ### How?
 
-**ni** assumes that you work with lockfiles (and you should)
+**ni** assumes that you work with lock-files (and you should).
 
-Before it runs, it will detect your `yarn.lock` / `pnpm-lock.yaml` / `package-lock.json` to know current package manager (or `packageManager` field in your packages.json), and runs the corresponding commands.
+Before `ni` runs the command, it detects your `yarn.lock` / `pnpm-lock.yaml` / `package-lock.json` / `bun.lock` / `bun.lockb` to know the current package manager (or `packageManager` field in your packages.json if specified) using the [package-manager-detector](https://github.com/antfu-collective/package-manager-detector) package and then runs the corresponding [package-manager-detector command](https://github.com/antfu-collective/package-manager-detector/blob/main/src/commands.ts).
+
+### Trouble shooting
+
+#### Conflicts with PowerShell
+
+PowerShell comes with a built-in alias `ni` for the `New-Item` cmdlet. To remove the alias in your current PowerShell session in favor of this package, use the following command:
+
+```PowerShell
+'Remove-Item Alias:ni -Force -ErrorAction Ignore'
+```
+
+If you want to persist the changes, you can add them to your PowerShell profile. The profile path is accessible within the `$profile` variable. The ps1 profile file can normally be found at
+
+- PowerShell 5 (Windows PowerShell): `C:\Users\USERNAME\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1`
+- PowerShell 7: `C:\Users\USERNAME\Documents\PowerShell\Microsoft.PowerShell_profile.ps1`
+- VSCode: `C:\Users\USERNAME\Documents\PowerShell\Microsoft.VSCode_profile.ps1`
+
+You can use the following script to remove the alias at shell start by adding the above command to your profile:
+
+```PowerShell
+if (-not (Test-Path $profile)) {
+  New-Item -ItemType File -Path (Split-Path $profile) -Force -Name (Split-Path $profile -Leaf)
+}
+
+$profileEntry = 'Remove-Item Alias:ni -Force -ErrorAction Ignore'
+$profileContent = Get-Content $profile
+if ($profileContent -notcontains $profileEntry) {
+  ("`n" + $profileEntry) | Out-File $profile -Append -Force -Encoding UTF8
+}
+```
+
+#### `nx` and `nix` is no longer available
+
+We renamed `nx`/`nix` to `nlx` to avoid conflicts with the other existing tools - [nx](https://nx.dev/) and [nix](https://nixos.org/). You can always alias them back on your shell configuration file (`.zshrc`, `.bashrc`, etc).
+
+```bash
+alias nx="nlx"
+# or
+alias nix="nlx"
+```

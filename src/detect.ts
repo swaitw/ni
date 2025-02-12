@@ -1,59 +1,48 @@
-import fs from 'fs'
-import path from 'path'
-import { execaCommand } from 'execa'
-import { findUp } from 'find-up'
+import process from 'node:process'
+import prompts from '@posva/prompts'
+import { detect as detectPM } from 'package-manager-detector'
+import { INSTALL_PAGE } from 'package-manager-detector/constants'
 import terminalLink from 'terminal-link'
-import prompts from 'prompts'
-import type { Agent } from './agents'
-import { AGENTS, INSTALL_PAGE, LOCKS } from './agents'
+import { x } from 'tinyexec'
 import { cmdExists } from './utils'
 
 export interface DetectOptions {
   autoInstall?: boolean
+  programmatic?: boolean
   cwd?: string
+  /**
+   * Should use Volta when present
+   *
+   * @see https://volta.sh/
+   * @default true
+   */
+  detectVolta?: boolean
 }
 
-export async function detect({ autoInstall, cwd }: DetectOptions) {
-  let agent: Agent | null = null
-
-  const lockPath = await findUp(Object.keys(LOCKS), { cwd })
-  let packageJsonPath: string | undefined
-
-  if (lockPath)
-    packageJsonPath = path.resolve(lockPath, '../package.json')
-  else
-    packageJsonPath = await findUp('package.json', { cwd })
-
-  // read `packageManager` field in package.json
-  if (packageJsonPath && fs.existsSync(packageJsonPath)) {
-    try {
-      const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'))
-      if (typeof pkg.packageManager === 'string') {
-        const [name, version] = pkg.packageManager.split('@')
-        if (name === 'yarn' && parseInt(version) > 1)
-          agent = 'yarn@berry'
-        else if (name in AGENTS)
-          agent = name
-        else
-          console.warn('[ni] Unknown packageManager:', pkg.packageManager)
+export async function detect({ autoInstall, programmatic, cwd }: DetectOptions = {}) {
+  const {
+    name,
+    agent,
+    version,
+  } = await detectPM({
+    cwd,
+    onUnknown: (packageManager) => {
+      if (!programmatic) {
+        console.warn('[ni] Unknown packageManager:', packageManager)
       }
-    }
-    catch {}
-  }
-
-  // detect based on lock
-  if (!agent && lockPath)
-    agent = LOCKS[path.basename(lockPath)]
+      return undefined
+    },
+  }) || {}
 
   // auto install
-  if (agent && !cmdExists(agent.split('@')[0])) {
+  if (name && !cmdExists(name) && !programmatic) {
     if (!autoInstall) {
-      console.warn(`[ni] Detected ${agent} but it doesn't seem to be installed.\n`)
+      console.warn(`[ni] Detected ${name} but it doesn't seem to be installed.\n`)
 
       if (process.env.CI)
         process.exit(1)
 
-      const link = terminalLink(agent, INSTALL_PAGE[agent])
+      const link = terminalLink(name, INSTALL_PAGE[name])
       const { tryInstall } = await prompts({
         name: 'tryInstall',
         type: 'confirm',
@@ -63,7 +52,17 @@ export async function detect({ autoInstall, cwd }: DetectOptions) {
         process.exit(1)
     }
 
-    await execaCommand(`npm i -g ${agent}`, { stdio: 'inherit', cwd })
+    await x(
+      'npm',
+      ['i', '-g', `${name}${version ? `@${version}` : ''}`],
+      {
+        nodeOptions: {
+          stdio: 'inherit',
+          cwd,
+        },
+        throwOnError: true,
+      },
+    )
   }
 
   return agent

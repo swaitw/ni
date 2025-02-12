@@ -1,17 +1,19 @@
-import { expect, test } from 'vitest'
-import { parseNu } from '../../src/commands'
+import { expect, it } from 'vitest'
+import { parseNu, serializeCommand } from '../../src/commands'
 
 const agent = 'yarn'
-const _ = (arg: string, expected: string) => () => {
-  expect(
-    parseNu(agent, arg.split(' ').filter(Boolean)),
-  ).toBe(
-    expected,
-  )
+function _(arg: string, expected: string) {
+  return async () => {
+    expect(
+      serializeCommand(await parseNu(agent, arg.split(' ').filter(Boolean))),
+    ).toBe(
+      expected,
+    )
+  }
 }
 
-test('empty', _('', 'yarn upgrade'))
+it('empty', _('', 'yarn upgrade'))
 
-test('interactive', _('-i', 'yarn upgrade-interactive'))
+it('interactive', _('-i', 'yarn upgrade-interactive'))
 
-test('interactive latest', _('-i --latest', 'yarn upgrade-interactive --latest'))
+it('interactive latest', _('-i --latest', 'yarn upgrade-interactive --latest'))

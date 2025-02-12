@@ -1,13 +1,15 @@
-import { expect, test } from 'vitest'
-import { parseNu } from '../../src/commands'
+import { expect, it } from 'vitest'
+import { parseNu, serializeCommand } from '../../src/commands'
 
 const agent = 'npm'
-const _ = (arg: string, expected: string) => () => {
-  expect(
-    parseNu(agent, arg.split(' ').filter(Boolean)),
-  ).toBe(
-    expected,
-  )
+function _(arg: string, expected: string) {
+  return async () => {
+    expect(
+      serializeCommand(await parseNu(agent, arg.split(' ').filter(Boolean))),
+    ).toBe(
+      expected,
+    )
+  }
 }
 
-test('empty', _('', 'npm update'))
+it('empty', _('', 'npm update'))

@@ -1,19 +1,21 @@
-import { expect, test } from 'vitest'
-import { parseNun } from '../../src/commands'
+import { expect, it } from 'vitest'
+import { parseNun, serializeCommand } from '../../src/commands'
 
 const agent = 'yarn@berry'
-const _ = (arg: string, expected: string) => () => {
-  expect(
-    parseNun(agent, arg.split(' ').filter(Boolean)),
-  ).toBe(
-    expected,
-  )
+function _(arg: string, expected: string) {
+  return async () => {
+    expect(
+      serializeCommand(await parseNun(agent, arg.split(' ').filter(Boolean))),
+    ).toBe(
+      expected,
+    )
+  }
 }
 
-test('single add', _('axios', 'yarn remove axios'))
+it('single add', _('axios', 'yarn remove axios'))
 
-test('multiple', _('eslint @types/node', 'yarn remove eslint @types/node'))
+it('multiple', _('eslint @types/node', 'yarn remove eslint @types/node'))
 
-test('-D', _('eslint @types/node -D', 'yarn remove eslint @types/node -D'))
+it('-D', _('eslint @types/node -D', 'yarn remove eslint @types/node -D'))
 
-test('global', _('eslint ni -g', 'npm uninstall -g eslint ni'))
+it('global', _('eslint ni -g', 'npm uninstall -g eslint ni'))
